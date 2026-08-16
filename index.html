@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  #map{width:100vw;height:80vh;}
+  #qrcode{margin:10px;}
+</style>
+</head>
+<body>
+
+<div id="qrcode"></div>
+<button onclick="sendLocation()">位置情報共有</button>
+<div id="map"></div>
+
+<script>
+const myId = crypto.randomUUID();
+new QRCode(document.getElementById("qrcode"), location.href.split('?')[0] + "?id=" + myId);
+
+const urlParams = new URLSearchParams(location.search);
+let targetId = urlParams.get("id");
+
+if (targetId) localStorage.setItem("savedTargetId", targetId);
+if (!targetId) targetId = localStorage.getItem("savedTargetId");
+
+let myMarker;
+let targetMarkers = {};
+
+const map = L.map('map').setView([35,135], 5);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+navigator.geolocation.getCurrentPosition(pos => {
+  const lat = pos.coords.latitude;
+  const lng = pos.coords.longitude;
+  myMarker = L.marker([lat, lng], {icon: L.icon({iconUrl:'https://maps.gstatic.com/mapfiles/ms2/micons/blue-dot.png',iconSize:[32,32]})}).addTo(map);
+  map.setView([lat, lng], 15);
+});
+
+async function loadLocations() {
+  const res = await fetch("https://your-server.com/location");
+  const users = await res.json();
+
+  users.forEach(u => {
+    if (u.id === myId) return;
+    if (targetId && u.id !== targetId) return;
+
+    if (targetMarkers[u.id]) map.removeLayer(targetMarkers[u.id]);
+
+    targetMarkers[u.id] = L.marker([u.lat, u.lng], {
+      icon: L.icon({
+        iconUrl:'https://maps.gstatic.com/mapfiles/ms2/micons/red-dot.png',
+        iconSize:[32,32]
+      })
+    }).addTo(map);
+  });
+}
+
+setInterval(loadLocations, 2000);
+
+function sendLocation() {
+  navigator.geolocation.getCurrentPosition(pos => {
+    const data = { id: myId, lat: pos.coords.latitude, lng: pos.coords.longitude };
+    fetch("https://your-server.com/location", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+  });
+}
+</script>
+
+</body>
+</html>
