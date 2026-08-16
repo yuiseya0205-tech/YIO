@@ -35,7 +35,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 navigator.geolocation.getCurrentPosition(pos=>{
 const lat=pos.coords.latitude;
 const lng=pos.coords.longitude;
-myMarker=L.marker([lat,lng],{icon:L.icon({iconUrl:'https://maps.gstatic.com/mapfiles/ms2/micons/blue-dot.png',iconSize:[32,32]})}).addTo(map);
+myMarker=L.marker([lat,lng],{icon:L.icon({iconUrl:'https://maps.gstatic.com/mapfiles/ms2/micons/blue-dot.png',iconSize:[32,32]}),zIndexOffset:0}).addTo(map);
 map.setView([lat,lng],15);
 });
 
@@ -46,7 +46,10 @@ users.forEach(u=>{
 if(u.id===myId)return;
 if(targetId&&u.id!==targetId)return;
 if(targetMarkers[u.id])map.removeLayer(targetMarkers[u.id]);
-targetMarkers[u.id]=L.marker([u.lat,u.lng],{icon:L.icon({iconUrl:'https://maps.gstatic.com/mapfiles/ms2/micons/red-dot.png',iconSize:[32,32]})}).addTo(map);
+targetMarkers[u.id]=L.marker([u.lat,u.lng],{
+icon:L.icon({iconUrl:'https://maps.gstatic.com/mapfiles/ms2/micons/red-dot.png',iconSize:[32,32]}),
+zIndexOffset:9999
+}).addTo(map);
 });
 }
 
